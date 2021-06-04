@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Garbage Image Prediction</title>
+</head>
+<body>
+	<h1>Upload your image :</h1>
+	<form action="/" method="POST" enctype="multipart/form-data">
+		<input type="file" name="img">
+		<input type="submit" name="btn">
+	</form>
+	<h2>Result prediction</h1>
+	<h3>This image most likely belongs to : {{data}}</h3>
+	<h4>Accuracy : {{data2}} %</h4>
+</body>
+</html>
