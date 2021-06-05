@@ -26,3 +26,6 @@ venv.bak/
 
 # Local History for Visual Studio Code
 .history/
+
+# Static generated image
+static/img.jpg
