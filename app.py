@@ -6,6 +6,7 @@ import keras.preprocessing.image as keras_pre_img
 import tensorflow as tf
 from keras.models import load_model
 import numpy as np
+import PIL
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -21,7 +22,7 @@ class Predict_Json(Resource):
         img.save("temp/img.jpg")
         img = keras_pre_img.load_img("temp/img.jpg", target_size=(180, 180))
         img_array = keras_pre_img.img_to_array(img)
-        img_array = tf.expand_dims(img_array, 0)
+        img_array = np.stack(img_array, axis=0)
 
         predictions = model.predict(img_array)
         score = tf.nn.softmax(predictions[0])
@@ -55,43 +56,7 @@ def index():
         #     .format(labels[np.argmax(score)], 100 * np.max(score))
         # )
 
-        return render_template("index.html", data=labels[np.argmax(score)], data2=100 * np.max(score))
-
-# @app.route("/predict", methods=["POST"])
-# def prediction():
-#     img = request.files['img']
-#     img.save("temp/img.jpg")
-#     img = keras_pre_img.load_img("temp/img.jpg", target_size=(180, 180))
-#     img_array = keras_pre_img.img_to_array(img)
-#     img_array = tf.expand_dims(img_array, 0)
-
-#     predictions = model.predict(img_array)
-#     score = tf.nn.softmax(predictions[0])
-
-#     # print(
-#     #     "This image most likely belongs to {} with a {:.2f} percent confidence."
-#     #     .format(labels[np.argmax(score)], 100 * np.max(score))
-#     # )
-
-#     return render_template("index.html", data=labels[np.argmax(score)], data2=100 * np.max(score))
-
-# @app.route("/json-predict", methods=["POST"])
-# def json_predict():
-#     img = request.files['img']
-#     img.save("temp/img.jpg")
-#     img = keras_pre_img.load_img("temp/img.jpg", target_size=(180, 180))
-#     img_array = keras_pre_img.img_to_array(img)
-#     img_array = tf.expand_dims(img_array, 0)
-
-#     predictions = model.predict(img_array)
-#     score = tf.nn.softmax(predictions[0])
-
-#     # print(
-#     #     "This image most likely belongs to {} with a {:.2f} percent confidence."
-#     #     .format(labels[np.argmax(score)], 100 * np.max(score))
-#     # )
-
-#     return {"labels": str(labels[np.argmax(score)]),"accuracy": str(np.max(score))}
+        return render_template("index.html", prediction="This image most likely belongs to {} with a {:.2f} % confidence.".format(labels[np.argmax(score)], 100 * np.max(score)))
 
 if __name__ == "__main__":
     app.run(debug=True)
