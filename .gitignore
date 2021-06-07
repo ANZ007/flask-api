@@ -28,4 +28,4 @@ venv.bak/
 .history/
 
 # Static generated image
-static/img.jpg
+static/img*.jpg

@@ -35,7 +35,7 @@
 		  <hr class="col-5 mb-4">
 		  <div class="col">
 			<div class="row mb-4">
-				<center><img onerror="this.style.display = 'none'" src="static/img.jpg"  alt="Uploaded Image" width="400" height="400"></center>
+				<center><img onerror="this.style.display = 'none'" src="{{ url_for('static', filename=image) }}"  alt="Uploaded Image" width="400" height="400"></center>
 			</div>
 			<div class="row">
 			  <h2>Result prediction</h1>

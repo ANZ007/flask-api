@@ -9,6 +9,9 @@ import tensorflow.keras.preprocessing.image as keras_pre_img
 from tensorflow.keras.models import load_model
 import numpy as np
 import PIL
+import uuid
+import os
+import time
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
@@ -19,28 +22,35 @@ labels = ['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
 MODEL_PATH = 'model/model.h5'
 model = load_model(MODEL_PATH, compile=False)
 
+def cleanup_files():
+    path = "static"
+    prefix_file = "img-"
+    now = time.time()
+
+    for f in filter(lambda fname: 'img-' in fname, os.listdir(path)):
+        f = os.path.join(path, f)
+        if os.stat(f).st_mtime < now - 5 * 60:
+            if os.path.isfile(f):
+                os.remove(f)
+                print("File {} removed".format(f))
+
 class Predict_Json(Resource):
     def post(self):
-        if os.path.exists('static/img.jpg'):
-            os.remove("static/img.jpg") 
+        cleanup_files()
+        uniq_fn = str(uuid.uuid4())
         img = request.files['img']
         fn_img = secure_filename(img.filename)
         if fn_img != '':
             fn_img_ext = os.path.splitext(fn_img)[1]
             if fn_img_ext not in app.config['UPLOAD_EXTENSIONS']:
                 abort(400, message="File Type not Allowed.")
-            img.save("static/img.jpg")
-            img = keras_pre_img.load_img("static/img.jpg", target_size=(180, 180))
+            img.save("static/img-{}.jpg".format(uniq_fn))
+            img = keras_pre_img.load_img("static/img-{}.jpg".format(uniq_fn), target_size=(180, 180))
             img_array = keras_pre_img.img_to_array(img)
             img_array = tf.expand_dims(img_array, axis=0)
 
             predictions = model.predict(img_array)
             score = tf.nn.softmax(predictions[0])
-
-            # print(
-            #     "This image most likely belongs to {} with a {:.2f} percent confidence."
-            #     .format(labels[np.argmax(score)], 100 * np.max(score))
-            # )
 
             return {"labels": str(labels[np.argmax(score)]),"accuracy": str(np.max(score))}
 
@@ -52,34 +62,28 @@ api.add_resource(Predict_Json, "/json-predict")
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if flask.request.method == 'GET':
-        if os.path.exists('static/img.jpg'):
-            os.remove("static/img.jpg") 
-        return render_template("index.html")
+        cleanup_files() 
+        return render_template("index.html", image="static/not_found.jpg")
 
     elif flask.request.method == 'POST':
-        img = request.files['img']
+        uniq_fn = str(uuid.uuid4())
         img = request.files['img']
         fn_img = secure_filename(img.filename)
         if fn_img != '':
             fn_img_ext = os.path.splitext(fn_img)[1]
             if fn_img_ext not in app.config['UPLOAD_EXTENSIONS']:
                 return render_template("index.html", prediction="File type not Allowed...")
-            img.save("static/img.jpg")
-            img = keras_pre_img.load_img("static/img.jpg", target_size=(180, 180))
+            img.save("static/img-{}.jpg".format(uniq_fn))
+            img = keras_pre_img.load_img("static/img-{}.jpg".format(uniq_fn), target_size=(180, 180))
             img_array = keras_pre_img.img_to_array(img)
             img_array = tf.expand_dims(img_array, 0)
 
             predictions = model.predict(img_array)
             score = tf.nn.softmax(predictions[0])
 
-            # print(
-            #     "This image most likely belongs to {} with a {:.2f} percent confidence."
-            #     .format(labels[np.argmax(score)], 100 * np.max(score))
-            # )
-
-            return render_template("index.html", prediction="This image most likely belongs to {} with a {:.2f} % confidence.".format(labels[np.argmax(score)], 100 * np.max(score)))
+            return render_template("index.html", image="img-{}.jpg".format(uniq_fn), prediction="This image most likely belongs to {} with a {:.2f} % confidence.".format(labels[np.argmax(score)], 100 * np.max(score)))
         else:
             return render_template("index.html", prediction="File Not Found.")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host= '0.0.0.0', port=5000,debug=False)
