@@ -63,7 +63,7 @@ api.add_resource(Predict_Json, "/json-predict")
 def index():
     if flask.request.method == 'GET':
         cleanup_files() 
-        return render_template("index.html", image="static/not_found.jpg")
+        return render_template("index.html", image="static/not_submitted.jpg")
 
     elif flask.request.method == 'POST':
         uniq_fn = str(uuid.uuid4())
@@ -72,7 +72,7 @@ def index():
         if fn_img != '':
             fn_img_ext = os.path.splitext(fn_img)[1]
             if fn_img_ext not in app.config['UPLOAD_EXTENSIONS']:
-                return render_template("index.html", prediction="File type not Allowed...")
+                return render_template("index.html", image="static/not_allowed.jpg", prediction="File type not Allowed...")
             img.save("static/img-{}.jpg".format(uniq_fn))
             img = keras_pre_img.load_img("static/img-{}.jpg".format(uniq_fn), target_size=(180, 180))
             img_array = keras_pre_img.img_to_array(img)
@@ -83,7 +83,7 @@ def index():
 
             return render_template("index.html", image="img-{}.jpg".format(uniq_fn), prediction="This image most likely belongs to {} with a {:.2f} % confidence.".format(labels[np.argmax(score)], 100 * np.max(score)))
         else:
-            return render_template("index.html", prediction="File Not Found.")
+            return render_template("index.html", image="static/not_found.jpg", prediction="File Not Found.")
 
 if __name__ == "__main__":
     app.run(host= '0.0.0.0', port=5000,debug=False)
